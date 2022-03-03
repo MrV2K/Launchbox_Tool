@@ -37,6 +37,8 @@
 ; Sped up edit window drawing
 ; Added basic data to unknown slaves
 ; Added database error check to fix list procedure;
+; Draw list, FTP download and filter code now in line with IGTool.
+; Main list columns now scale to scrollbar.
 
 ; ====================================================================
 ;
@@ -425,7 +427,7 @@ Procedure Load_CSV()
   
   Protected path.s
   
-  path=OpenFileRequester("Open","","*.xml",-1)
+  path=OpenFileRequester("Open","","XML File (*.xml)|*.xml",-1)
   
   CSV_Path=path
   
@@ -501,20 +503,15 @@ Procedure Get_Database()
       If Old_DB <> New_DB
         
         SetGadgetText(#LOADING_TEXT,"Downloading data file.")
-        
         DeleteFile(Old_DB)
-        
         FTPDownload(hConnect,New_DB,New_DB)
         FTPDownload(hConnect,"genres","genres")
-        
         UM_Data_File=New_DB
         
       Else
         
         SetGadgetText(#LOADING_TEXT,"Data file up to date.")
-        
         Delay(500)
-        
         UM_Data_File=Old_DB
         
       EndIf
@@ -524,7 +521,6 @@ Procedure Get_Database()
     Else
       
       MessageRequester("Error", "Cannot connect to FTP.",#PB_MessageRequester_Error|#PB_MessageRequester_Ok)
-      
       UM_Data_File=Old_DB
       
     EndIf
@@ -532,12 +528,11 @@ Procedure Get_Database()
   Else
     
     MessageRequester("Error", "Cannot connect to Network.",#PB_MessageRequester_Error|#PB_MessageRequester_Ok)
-    
     UM_Data_File=Old_DB
     
   EndIf
   
-  If Old_DB<>"" : UM_Data_File=Old_DB : EndIf
+  If New_DB="" : UM_Data_File=Old_DB : EndIf
   
   If UM_Data_File="" : MessageRequester("Error","No database file found",#PB_MessageRequester_Error|#PB_MessageRequester_Ok) : EndIf
   
@@ -602,6 +597,7 @@ Procedure Draw_List()
     If unknown
       If UM_Database()\UM_Unknown
         AddGadgetItem(#MAIN_LIST,-1,UM_Database()\Title+Chr(10)+UM_Database()\UM_Archive)
+        SetGadgetItemColor(#MAIN_LIST, GetGadgetState(#MAIN_LIST), #PB_Gadget_FrontColor,#Red)
       EndIf
     Else
       AddGadgetItem(#MAIN_LIST,-1,UM_Database()\Title+Chr(10)+UM_Database()\UM_Archive)
@@ -618,6 +614,12 @@ Procedure Draw_List()
   SetActiveGadget(#MAIN_LIST)
   
   Resume_Window(#MAIN_WINDOW)
+  
+  If GetWindowLongPtr_(GadgetID(#MAIN_LIST), #GWL_STYLE) & #WS_VSCROLL
+    SetGadgetItemAttribute(#MAIN_LIST,1,#PB_ListIcon_ColumnWidth,340)
+  Else
+    SetGadgetItemAttribute(#MAIN_LIST,1,#PB_ListIcon_ColumnWidth,355)
+  EndIf
   
 EndProcedure
 
@@ -643,7 +645,7 @@ Procedure Fix_List()
     EndIf
   Next
   
-  FreeMap(Comp_Map())
+  ClearMap(Comp_Map())
   ClearList(Comp_Database())
   
   SortStructuredList(UM_Database(),#PB_Sort_Ascending|#PB_Sort_NoCase,OffsetOf(XML_Data\Title),TypeOf(XML_Data\Title))
@@ -779,6 +781,12 @@ Procedure Main_Window()
     
     Resume_Window(#MAIN_WINDOW)
     
+    If GetWindowLongPtr_(GadgetID(#MAIN_LIST), #GWL_STYLE) & #WS_VSCROLL
+      SetGadgetItemAttribute(#MAIN_LIST,1,#PB_ListIcon_ColumnWidth,340)
+    Else
+      SetGadgetItemAttribute(#MAIN_LIST,1,#PB_ListIcon_ColumnWidth,355)
+    EndIf
+    
   EndIf
   
 EndProcedure
@@ -900,8 +908,7 @@ Repeat
 Until close=#True
 
 End
-; IDE Options = PureBasic 6.00 Beta 3 (Windows - x64)
-; CursorPosition = 888
+; IDE Options = PureBasic 6.00 Beta 4 (Windows - x64)
 ; Folding = AAAA-
 ; Optimizer
 ; EnableThread
@@ -909,7 +916,7 @@ End
 ; DPIAware
 ; UseIcon = boing.ico
 ; Executable = LaunchBox_Tool.exe
-; Compiler = PureBasic 6.00 Beta 3 - C Backend (Windows - x64)
+; Compiler = PureBasic 6.00 Beta 4 (Windows - x64)
 ; Debugger = Standalone
 ; IncludeVersionInfo
 ; VersionField0 = 0,0,0,2
@@ -922,6 +929,11 @@ End
 ; VersionField7 = IG_Tool
 ; VersionField8 = IGame_Tool.exe
 ; VersionField9 = 2021 Paul Vince
+; VersionField10 = -
+; VersionField11 = -
+; VersionField12 = -
+; VersionField13 = -
+; VersionField14 = -
 ; VersionField15 = VOS_NT
 ; VersionField16 = VFT_APP
 ; VersionField17 = 0809 English (United Kingdom)
